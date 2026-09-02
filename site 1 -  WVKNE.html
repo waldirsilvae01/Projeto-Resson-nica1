@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07111f" />
+  <title>Projeto Ressonância</title>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap');
+    
+    :root { 
+      --ink: #e0f0ff;      
+      --panel: #cbe6ff;    
+      --cyan: #007acc;     
+      --pale: #10233d;     
+      --muted: #4a6a8c;    
+      --line: rgba(0, 122, 204, 0.3); 
+    }
+    
+    *{box-sizing:border-box} 
+    body{margin:0;background:var(--ink);color:var(--pale);font-family:Manrope,Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+    
+    .app-shell{min-height:100vh;position:relative;isolation:isolate;background:radial-gradient(circle at 50% 45%, #f0f8ff 0%, #dcecff 27%, #cce3ff 70%);overflow:hidden}
+    .app-shell:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.4;background-image:linear-gradient(rgba(0,122,204,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(0,122,204,.15) 1px,transparent 1px);background-size:45px 45px;mask-image:radial-gradient(circle at center,black,transparent 74%)}
+    
+    .ambient{position:absolute;width:38rem;height:38rem;border-radius:50%;filter:blur(80px);opacity:.2;z-index:-1}
+    .ambient-one{top:-20rem;left:-20rem;background:#3db8ff}
+    .ambient-two{bottom:-23rem;right:-20rem;background:#8ccff1}
+    
+    .wavefield{position:absolute;inset:76px 0 0;pointer-events:none;z-index:-1;opacity:.5;overflow:hidden}
+    .wavefield svg{width:160%;height:100%;min-width:950px;position:absolute;left:-30%;animation:drift 17s linear infinite}
+    .wavefield path{fill:none;stroke-width:2}
+    .mechanical-wave{stroke:#0088cc;stroke-dasharray:8 11}
+    .sound-wave{stroke:#66b3ff;stroke-width:1!important;opacity:.8}
+    .light-wave{stroke:#6b47dc;opacity:.8;stroke-dasharray:3 7}
+    
+    .system-header{min-height:76px;padding:10px clamp(22px,5vw,60px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-bottom:1px solid var(--line);font-size:.72rem;font-weight:700;letter-spacing:.12em}
+    .header-item{display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .brand-mark{color:var(--cyan);display:flex;align-items:center;justify-content:center}
+    
+    .header-status{display:none}
+    
+    .screen{width:min(900px,calc(100% - 40px));min-height:calc(100vh - 76px);margin:auto;display:none;opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .55s ease}
+    .screen.active{display:flex;opacity:1;transform:none}
+    .center-screen{flex-direction:column;justify-content:center;align-items:center;text-align:center}
+    .panel-screen{align-items:center;justify-content:center}
+    
+    .eyebrow{color:var(--cyan);font-family:"DM Mono",monospace;font-size:.72rem;letter-spacing:.18em;margin:0 0 20px; font-weight: 600;}
+    h1,h2{margin:0;text-transform:uppercase;letter-spacing:-.045em}
+    h1{font-size:clamp(2.8rem,9vw,6.5rem);line-height:.9;font-weight:800; color: #004d80;}
+    
+    .wave-word { display: inline-block; color: #007acc; text-decoration: underline; text-decoration-style: wavy; text-decoration-color: rgba(0, 122, 204, 0.4); text-underline-offset: 12px; text-decoration-thickness: 4px; }
+    .wave-word span { display: inline-block; animation: waveLetter 2s ease-in-out infinite; }
+    .wave-word span:nth-child(1) { animation-delay: 0.0s; } .wave-word span:nth-child(2) { animation-delay: 0.1s; }
+    .wave-word span:nth-child(3) { animation-delay: 0.2s; } .wave-word span:nth-child(4) { animation-delay: 0.3s; }
+    .wave-word span:nth-child(5) { animation-delay: 0.4s; } .wave-word span:nth-child(6) { animation-delay: 0.5s; }
+    .wave-word span:nth-child(7) { animation-delay: 0.6s; } .wave-word span:nth-child(8) { animation-delay: 0.7s; }
+    .wave-word span:nth-child(9) { animation-delay: 0.8s; } .wave-word span:nth-child(10) { animation-delay: 0.9s; }
+    .wave-word span:nth-child(11) { animation-delay: 1.0s; }
+    
+    h2{font-size:clamp(1.9rem,5vw,3.3rem);font-weight:800; color: #004d80;}
+    .lead{color:var(--muted);font-size:1.05rem;max-width:500px;line-height:1.7;margin:25px auto}
+    
+    .primary-button,.secondary-button{font:700 .76rem Manrope,sans-serif;text-transform:uppercase;letter-spacing:.12em;border:1px solid var(--cyan);cursor:pointer;transition:all .3s ease; border-radius: 35px;}
+    .primary-button{color:#ffffff;background:var(--cyan);padding:16px 28px;margin-top:18px}
+    .primary-button span{font-size:1.25rem;margin-left:14px;vertical-align:-1px}
+    .primary-button:hover{box-shadow:0 0 20px rgba(0,122,204,.4), 0 0 0 6px rgba(0,122,204,.15);transform:translateY(-2px);background:#005c99; color: #fff;}
+    .secondary-button{color:var(--cyan);background:rgba(0,122,204,.05);padding:13px 22px}
+    .secondary-button:hover{background:rgba(0,122,204,.15); box-shadow: 0 0 0 4px rgba(0,122,204,.1);}
+    
+    .action-buttons { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; }
+    .action-buttons button { margin-top: 0 !important; }
+    .center-screen .action-buttons { justify-content: center; }
+    
+    .terminal-lines{width:min(550px,100%);min-height:150px;text-align:left;font-family:"DM Mono",monospace;color:#004d80;font-size:clamp(.8rem,2vw,1rem);line-height:2.3}
+    .terminal-line{animation:appear .35s ease both}
+    .terminal-line:before{content:"›";color:var(--cyan);padding-right:12px}
+    .progress-track{width:min(550px,100%);height:5px;background:rgba(0,122,204,.15);overflow:hidden; border-radius: 4px;}
+    .progress-fill{height:100%;width:0;background:var(--cyan);box-shadow:0 0 10px var(--cyan);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+    .progress-label{font:12px "DM Mono",monospace;color:var(--muted);align-self:flex-end;width:min(550px,100%);text-align:right}
+    
+    .panel,.story-card{width:min(640px,100%);padding:clamp(28px,6vw,55px);background:rgba(255, 255, 255, 0.85);backdrop-filter: blur(10px);border:1px solid rgba(0,122,204,0.2);box-shadow:0 15px 40px rgba(0,50,100,.1)}
+    .panel-title{font:600 .78rem "DM Mono",monospace;letter-spacing:.15em;color:var(--cyan);border-bottom:1px solid rgba(0,122,204,0.15);padding-bottom:17px;margin:0 0 10px}
+    
+    .diagnostic-list{margin:22px 0}
+    .diagnostic-list div{display:flex;justify-content:space-between;border-bottom:1px solid rgba(0,122,204,0.1);padding:13px 0;font-size:.92rem; color: #2a405c;}
+    .diagnostic-list b{font:600 .76rem "DM Mono",monospace;color:#008060} 
+    .diagnostic-list .warning{color:#d97706} 
+    .status-incomplete{font:600 .75rem "DM Mono",monospace;color:#d97706;margin:25px 0}
+    .status-incomplete i{width:7px;height:7px;background:#d97706;border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 6px #d97706}
+    .story-card p:not(.eyebrow),.conclusion p{color:#2a405c;line-height:1.75}
+    .subtle{color:var(--muted);font-size:.84rem}
+    
+    form{margin-top:25px}
+    form label{display:flex;align-items:center;gap:18px;font:600 .73rem "DM Mono",monospace;color:#3a5c7c;margin:11px 0}
+    
+    input{min-width:0;flex:1;background:#ffffff;border:1px solid rgba(0,122,204,.3);color:#004d80;padding:13px;font:600 .85rem "DM Mono",monospace;outline:none;text-transform:uppercase; border-radius: 4px;}
+    input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,122,204,.15)}
+    .form-error{margin:15px 0 0;color:#dc2626;font-size:.82rem;font-weight: 500;min-height:1.2em}
+    
+    .validation-list{width:min(450px,100%);text-align:center;margin-top:27px;font:600 .9rem "DM Mono",monospace;line-height:2.2;color:#2a405c}
+    .validation-list div{opacity:0;animation:appear .4s forwards; display: flex; justify-content: center; align-items: center;}
+    .validation-list b{color:#008060;margin-right:10px}
+    
+    .spectrum-release{width:min(100vw,1120px);height:270px;position:relative;overflow:hidden;margin:12px 0 8px; background: rgba(0,0,0,0.03); border-radius: 12px;}
+    .white-origin{position:absolute;z-index:2;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;opacity:0;background:#fff;box-shadow:0 0 8px 4px #fff,0 0 42px 17px rgba(255,255,255,.9)}
+    .spectral-band{position:absolute;z-index:1;left:50%;top:50%;width:max(56vw,560px);height:7px;opacity:0;transform-origin:0 50%;transform:rotate(var(--angle)) scaleX(.02);background:linear-gradient(90deg,rgba(255,255,255,.98) 0%,var(--color) 22%,var(--color) 55%,transparent 100%);filter:drop-shadow(0 0 5px var(--color))}
+    .spectral-band:after{content:"";position:absolute;right:100%;top:0;width:100%;height:100%;background:linear-gradient(270deg,rgba(255,255,255,.98) 0%,var(--color) 22%,var(--color) 55%,transparent 100%)}
+    
+    .band-red{--color:#ff4d4d;--angle:-27deg} .band-orange{--color:#ff8c1a;--angle:-18deg} .band-yellow{--color:#e6b800;--angle:-9deg}
+    .band-green{--color:#33cc33;--angle:0deg} .band-cyan{--color:#00bfff;--angle:9deg} .band-blue{--color:#1a75ff;--angle:18deg}
+    .band-violet{--color:#9933ff;--angle:27deg}
+    
+    .spectrum-release.play .white-origin{animation:lightSource 6s cubic-bezier(.16,.8,.2,1) forwards}
+    .spectrum-release.play .spectral-band{animation:spreadSpectrum 7s cubic-bezier(.16,.8,.2,1) forwards}
+    .spectrum-release.play .band-orange{animation-delay:.25s} .spectrum-release.play .band-yellow{animation-delay:.5s}
+    .spectrum-release.play .band-green{animation-delay:.75s} .spectrum-release.play .band-cyan{animation-delay:1.0s}
+    .conclusion li:before{content:"✓";color:#008060;margin-right:11px; font-weight: bold;}
+    .reward-seal{width:90px;height:90px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;margin:8px 0 25px;color:var(--cyan);font-size:2.5rem;box-shadow:0 0 25px rgba(0,122,204,.2); background: #fff;}
+    
+    .decryption-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; margin-top: -30px; }
+    .ring-loader { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
+    .ring { position: absolute; border-radius: 50%; border: 3px solid transparent; }
+    .ring1 { width: 100%; height: 100%; border-top-color: var(--cyan); border-bottom-color: var(--cyan); animation: spin 3s linear infinite; filter: drop-shadow(0 0 8px var(--cyan));}
+    .ring2 { width: 75%; height: 75%; border-left-color: #b84dff; border-right-color: #b84dff; animation: spin-reverse 2s linear infinite; filter: drop-shadow(0 0 6px #b84dff); }
+    .ring3 { width: 50%; height: 50%; border-top-color: #fff; border-bottom-color: #fff; animation: spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; filter: drop-shadow(0 0 4px #fff); }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+    .flash-overlay { position: fixed; inset: 0; background: #ffffff; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
+    
+    @keyframes appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+    @keyframes drift{to{transform:translateX(11%)}}
+    @keyframes waveLetter { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); text-shadow: 0 10px 15px rgba(0, 122, 204, 0.3); } }
+    @keyframes lightSource{0%{opacity:0;transform:scale(.2)}18%{opacity:1;transform:scale(1)}47%{opacity:1;transform:scale(8);box-shadow:0 0 26px 16px #fff,0 0 60px 30px rgba(255,255,255,.9)}100%{opacity:0;transform:scale(.1)}}
+    @keyframes spreadSpectrum{0%,18%{opacity:0;transform:rotate(var(--angle)) scaleX(.02)}39%{opacity:1}76%{opacity:.94;transform:rotate(var(--angle)) scaleX(1.48)}100%{opacity:0;transform:rotate(var(--angle)) scaleX(1.8)}}
+    @keyframes pulseGlow { 0% { box-shadow: 0 0 20px rgba(0,122,204,0.3); transform: scale(1); } 100% { box-shadow: 0 0 50px rgba(0,122,204,0.7); transform: scale(1.05); } }
+    
+    .auth-scanner { position: relative; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; border: 2px dashed rgba(0, 122, 204, 0.4); border-radius: 50%; overflow: hidden; animation: pulseBorder 2s infinite; margin-bottom: 20px; }
+    .scanner-beam { position: absolute; left: 0; width: 100%; height: 15%; background: rgba(0,191,255,0.6); box-shadow: 0 0 15px rgba(0,191,255,0.8); animation: scanSweep 1.5s ease-in-out infinite alternate; }
+    .shield-icon { width: 65px; height: 65px; stroke: var(--cyan); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px rgba(0,122,204,0.5)); }
+    .shield-icon path.shield-outline { stroke-dasharray: 250; stroke-dashoffset: 250; }
+    .screen.active .shield-icon path.shield-outline { animation: drawShield 2s ease forwards; }
+    .shield-icon path.shield-check { stroke-dasharray: 100; stroke-dashoffset: 100; }
+    .screen.active .shield-icon path.shield-check { animation: drawShield 1s ease forwards 2.5s; }
+    @keyframes pulseBorder { 0%, 100% { border-color: rgba(0, 122, 204, 0.3); box-shadow: 0 0 0 transparent; } 50% { border-color: rgba(0, 191, 255, 0.8); box-shadow: 0 0 25px rgba(0, 191, 255, 0.4); } }
+    @keyframes scanSweep { 0% { top: -20%; } 100% { top: 100%; } }
+    @keyframes drawShield { to { stroke-dashoffset: 0; } }
+    
+    .team-highlight { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); border: 1px solid rgba(0, 122, 204, 0.3); padding: 18px 45px; border-radius: 6px; margin: 15px auto 30px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 50, 100, 0.08); display: inline-block; min-width: 320px; }
+    .team-highlight::before { content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: var(--cyan); }
+    .team-name-glow { font-family: 'DM Mono', monospace; font-size: clamp(1.6rem, 5vw, 2.4rem); color: var(--cyan); letter-spacing: 0.12em; margin: 0; text-transform: uppercase; font-weight: 800; text-shadow: 0 4px 15px rgba(0, 122, 204, 0.15); }
+    
+    .dynamic-wave span { display: inline-block; animation: waveLetter 2s ease-in-out infinite; }
+    
+    .header-logos { display: flex; align-items: center; justify-content: space-evenly; flex: 1; gap: 30px; }
+    .header-logos img { height: 80px; width: auto; max-width: 220px; object-fit: contain; }
+    .floating-logo { position: fixed; bottom: 25px; right: 35px; height: 100px; z-index: 50; }
+
+    /* ESTILOS PARA O BOTÃO E MODAL DOS AUTORES */
+    .btn-floating-authors {
+      position: fixed; bottom: 25px; left: 35px; z-index: 50;
+      font: 600 0.75rem "DM Mono", monospace; color: var(--cyan);
+      background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0,122,204,0.4);
+      padding: 10px 20px; border-radius: 30px; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 50, 100, 0.1);
+      transition: all 0.3s ease; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .btn-floating-authors:hover { background: #fff; border-color: var(--cyan); box-shadow: 0 6px 20px rgba(0, 122, 204, 0.2); transform: translateY(-2px); }
+    
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(7, 17, 31, 0.85); backdrop-filter: blur(5px);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      position: relative; max-width: 650px; width: 90%;
+      transform: translateY(20px); transition: transform 0.4s ease;
+      border-left: 5px solid var(--cyan); border-radius: 12px;
+      background: #ffffff;
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    
+    .close-btn {
+      position: absolute; top: 15px; right: 15px; background: none; border: none;
+      font-size: 2rem; color: var(--cyan); cursor: pointer; line-height: 1; transition: color 0.2s;
+    }
+    .close-btn:hover { color: #005c99; }
+    
+    .authors-layout { display: flex; flex-direction: column; gap: 25px; margin-top: 10px; }
+    .authors-photo img { width: 100%; border-radius: 8px; border: 1px solid rgba(0,122,204,0.2); display: block; object-fit: cover; }
+    .authors-text { font-size: 0.95rem; color: #2a405c; line-height: 1.7; text-align: left; }
+    
+    @media(min-width: 600px) {
+      .authors-layout { flex-direction: row; align-items: center; }
+      .authors-photo { flex: 1; }
+      .authors-text { flex: 1.5; }
+    }
+    @media(max-width:520px){
+      .system-header{height:auto;font-size:.65rem;padding:15px;justify-content:center;gap:15px}
+      .header-logos { gap: 15px; } .header-logos img { height: 55px; }
+      .floating-logo { height: 75px; bottom: 15px; right: 15px; }
+      .btn-floating-authors { bottom: 15px; left: 15px; font-size: 0.65rem; padding: 8px 15px; }
+      .wavefield{inset:95px 0 0} .screen{min-height:calc(100vh - 95px)}
+      .panel,.story-card{padding:28px 22px} form label{gap:8px;font-size:.63rem}
+      input{padding:11px;font-size:.69rem} .diagnostic-list div{font-size:.8rem}
+      .spectrum-release{height:225px} .spectral-band{width:660px;height:6px}
+      .wave-instrument{margin-bottom:15px}
+      .conclusion-quote { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+    <div class="wavefield" aria-hidden="true">
+      <svg viewBox="0 0 1440 480" preserveAspectRatio="none">
+        <path class="mechanical-wave" d="M-80 205 C50 90 150 90 280 205 S510 320 640 205 S870 90 1000 205 S1230 320 1520 205" />
+        <path class="sound-wave" d="M-60 320 C45 285 100 355 170 320 S295 285 365 320 S490 355 560 320 S685 285 755 320 S880 355 950 320 S1075 285 1145 320 S1270 355 1500 320" />
+        <path class="light-wave" d="M-80 112 C20 68 85 68 185 112 S350 156 450 112 S615 68 715 112 S880 156 980 112 S1145 68 1245 112 S1410 156 1520 112" />
+      </svg>
+    </div>
+    
+    <header class="system-header" aria-label="Informações do sistema">
+      <div class="header-item">
+        <span class="brand-mark" aria-label="Logo Onda">
+          <svg viewBox="0 0 24 12" width="22" height="11" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M2 6 C 7 0, 7 12, 12 6 C 17 0, 17 12, 22 6"/></svg>
+        </span>
+        <span>PROJETO RESSONÂNCIA</span>
+      </div>
+      
+      <div class="header-logos">
+        <img src="https://drive.google.com/thumbnail?id=1HR808azWpt1iGIh03jOQyXRlUHvPA5IE&sz=w500" alt="Logo IFSertão">
+        <img src="https://drive.google.com/thumbnail?id=1HcHCVbRj_7otqqZ1JWdM__kFCNqC_glk&sz=w500" alt="Logo PIBID">
+      </div>
+      <span id="headerStatus" style="display:none;">SISTEMA OFFLINE</span>
+    </header>
+
+    <section id="screen-start" class="screen active center-screen" style="position: relative;">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 55px; margin-top: -60px;">
+        <h1>PROJETO<br>
+          <div class="wave-word">
+            <span>R</span><span>E</span><span>S</span><span>S</span><span>O</span><span>N</span><span>Â</span><span>N</span><span>C</span><span>I</span><span>A</span>
+          </div>
+        </h1>
+        
+        <button class="primary-button" data-next="screen-team-name" style="margin: 0; padding: 18px 32px; font-size: 0.85rem;">Acessar <span style="font-size: 1.35rem;">→</span></button>
+      </div>
+
+      <div style="position: absolute; bottom: 25px; width: 100%; font-size: 0.65rem; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.8; text-align: center; padding: 0 20px;">
+        <p style="margin: 0; font-weight: 600; color: var(--cyan); letter-spacing: 0.1em; margin-bottom: 8px;">DESENVOLVIDO POR</p>
+        Waldir Evangelista da Silva Filho &nbsp;•&nbsp; Valdemir De Lima Bezerra &nbsp;•&nbsp; Kauan Coelho Da Silva<br>
+        Newton Pionório Nogueira &nbsp;•&nbsp; Ericleiton Rodrigues De Macedo
+      </div>
+    </section>
+
+    <section id="screen-team-name" class="screen panel-screen">
+      <div class="panel module-panel" style="text-align: center;">
+        <p class="panel-title">IDENTIFICAÇÃO DE USUÁRIO</p>
+        <p class="subtle" style="font-size: 1rem; margin-bottom: 25px;">Insira o nome da sua equipe para registrar o acesso ao sistema e iniciar os procedimentos.</p>
+        <form id="teamForm" novalidate style="margin-top: 20px;">
+          <input autocomplete="off" id="teamInput" type="text" placeholder="NOME DA EQUIPE" style="width: 100%; text-align: center; font-size: 1.1rem; padding: 18px; margin: 10px 0; letter-spacing: 0.1em;" />
+          <p id="teamError" class="form-error" role="alert"></p>
+          <div class="action-buttons">
+            <button type="button" class="secondary-button" data-next="screen-start">← Voltar</button>
+            <button type="submit" class="primary-button">Iniciar Sessão <span>→</span></button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="screen-boot" class="screen center-screen" aria-live="polite">
+      <p class="eyebrow">INICIALIZAÇÃO DO SISTEMA</p>
+      <div id="bootMessages" class="terminal-lines"></div>
+      <div class="progress-track"><div id="bootProgress" class="progress-fill"></div></div>
+      <p id="bootPercentage" class="progress-label">0%</p>
+    </section>
+
+    <section id="screen-diagnostic" class="screen panel-screen">
+      <div class="panel">
+        <p class="panel-title">DIAGNÓSTICO DO ARQUIVO PERDIDO</p>
+        <div class="diagnostic-list">
+          <div><span>Estação 1: </span><b>✓ MAPEADO</b></div>
+          <div><span>Estação 2: </span><b>✓ MAPEADO</b></div>
+          <div><span>Estação 3: </span><b>✓ MAPEADO</b></div>
+          <div><span>Estação 4: </span><b>✓ MAPEADO</b></div>
+          <div><span>Estação 5: </span><b>✓ MAPEADO</b></div>
+          <div><span>Senha das 5 estações</span><b class="warning">⚠ AUSENTE</b></div>
+        </div>
+        <div class="status-incomplete"><i></i> STATUS: Senha pendente</div>
+        <div class="action-buttons">
+          <button type="button" class="secondary-button" data-next="screen-start">← Voltar</button>
+          <button type="button" class="primary-button" data-next="screen-modules">Inserir senha <span>→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-modules" class="screen panel-screen">
+      <div class="panel module-panel">
+        <p class="panel-title">DESBLOQUEIO DE ACESSO</p>
+        <p class="subtle">Digite a senha de 5 letras formada pelas pistas recolhidas nas 5 estações experimentais.</p>
+        <form id="modulesForm" novalidate style="text-align: center;">
+          <input autocomplete="off" id="senhaInput" type="text" maxlength="5" placeholder="_____ " style="width: 100%; text-align: center; font-size: 1.5rem; padding: 20px; letter-spacing: 0.8em; margin: 15px 0;" />
+          <p id="formError" class="form-error" role="alert"></p>
+          <div class="action-buttons">
+            <button type="button" class="secondary-button" data-next="screen-diagnostic">← Voltar</button>
+            <button type="submit" class="primary-button">Validar senha <span>→</span></button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="screen-validation" class="screen center-screen" aria-live="polite">
+      <p class="eyebrow">VERIFICAÇÃO DE INTEGRIDADE</p><h2 id="validationTitle">Analisando criptografia...</h2>
+      <div class="progress-track"><div id="validationProgress" class="progress-fill"></div></div>
+      <div id="validationList" class="validation-list"></div>
+    </section>
+
+    <section id="screen-release" class="screen center-screen" aria-live="polite">
+      <p class="eyebrow">ARQUIVO DESBLOQUEADO</p><h2 id="releaseTitle">Recompondo o espectro</h2>
+      <div id="spectrumRelease" class="spectrum-release" aria-label="Luz branca se decompondo em espectro visível">
+        <div class="white-origin"></div>
+        <i class="spectral-band band-red"></i><i class="spectral-band band-orange"></i><i class="spectral-band band-yellow"></i>
+        <i class="spectral-band band-green"></i><i class="spectral-band band-cyan"></i><i class="spectral-band band-blue"></i><i class="spectral-band band-violet"></i>
+      </div>
+      <p id="releaseStatus" class="release-status">LUZ BRANCA — TODAS AS FREQUÊNCIAS EM EQUILÍBRIO</p>
+    </section>
+
+    <section id="screen-lab" class="screen center-screen">
+      <div class="wave-instrument" aria-label="Leitura de onda estabilizada" style="width: 100%; max-width: 700px; padding: 25px 20px 15px; margin: 0 auto 35px; background: #0a1128; border: 1px solid #007acc; border-radius: 12px; box-shadow: inset 0 0 35px rgba(0, 122, 204, 0.3), 0 0 20px rgba(0, 122, 204, 0.25);">
+        <div class="instrument-caption" style="text-align: center; margin-bottom: 25px; font-size: 0.85rem; color: #00bfff; text-shadow: 0 0 10px rgba(0, 191, 255, 0.7); letter-spacing: 0.25em; font-weight: 700;">SINAL DE DADOS ESTABILIZADO</div>
+        
+        <svg viewBox="0 0 400 140" role="img" style="display: block; width: 100%; height: auto; overflow: hidden;">
+          <g stroke="rgba(0, 191, 255, 0.15)" stroke-width="1">
+            <line x1="0" y1="35" x2="400" y2="35" />
+            <line x1="0" y1="105" x2="400" y2="105" />
+            <line x1="100" y1="0" x2="100" y2="140" />
+            <line x1="200" y1="0" x2="200" y2="140" />
+            <line x1="300" y1="0" x2="300" y2="140" />
+          </g>
+          <line x1="0" y1="70" x2="400" y2="70" stroke="rgba(0, 191, 255, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+          
+          <path d="M 0 70 Q 30 10, 60 70 T 120 70 T 180 70 T 240 70 T 300 70 T 360 70 T 420 70 T 480 70 T 540 70" 
+                stroke="#00bfff" stroke-width="3.5" fill="none" stroke-linecap="round" filter="drop-shadow(0 0 6px #00bfff)">
+            <animateTransform attributeName="transform" type="translate" from="0 0" to="-120 0" dur="1.8s" repeatCount="indefinite" />
+          </path>
+          
+          <path d="M 0 70 Q 30 130, 60 70 T 120 70 T 180 70 T 240 70 T 300 70 T 360 70 T 420 70 T 480 70 T 540 70" 
+                stroke="#b84dff" stroke-width="2.5" fill="none" stroke-linecap="round" filter="drop-shadow(0 0 5px #b84dff)" opacity="0.85">
+            <animateTransform attributeName="transform" type="translate" from="0 0" to="-120 0" dur="2.2s" repeatCount="indefinite" />
+          </path>
+        </svg>
+      </div>
+      
+      <div style="margin: 30px 0 15px;">
+        <h2>Arquivo Descriptografado</h2>
+        <p class="lead" style="margin-top: 10px; color: #2a405c;">O arquivo secreto está estabilizado e pronto para leitura.</p>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="button" class="primary-button" id="btn-read-secret">Ler Arquivo Secreto <span>→</span></button>
+      </div>
+    </section>
+
+    <section id="screen-transition" class="screen center-screen" aria-live="polite">
+      <div class="decryption-container">
+        <div class="ring-loader">
+          <div class="ring ring1"></div>
+          <div class="ring ring2"></div>
+          <div class="ring ring3"></div>
+        </div>
+        <div class="cipher-display">
+          <p class="eyebrow" style="margin-bottom: 15px;">DECODIFICANDO DIRETÓRIO RAIZ</p>
+          <h2 id="cipherText" style="font-family: 'DM Mono', monospace; font-size: clamp(1.4rem, 5vw, 2.8rem); letter-spacing: 0.15em; color: var(--cyan); text-shadow: 0 0 15px rgba(0, 122, 204, 0.6); min-height: 1.2em;">01010101</h2>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-conclusion" class="screen panel-screen">
+      <div class="panel conclusion">
+        <p class="eyebrow">ARQUIVO RECUPERADO</p>
+        <h2 style="margin-bottom: 20px;">Registro Descriptografado</h2>
+        
+        <div style="text-align: left; font-size: 1.05rem;">
+          <p>Parabéns, equipe <span id="teamNameDisplay" style="color: var(--cyan); font-weight: 700; text-transform: uppercase;"></span>! Se vocês estão lendo esta mensagem, significa que conseguiram!</p>
+          <p>Vocês percorreram todos os desafios, reuniram as pistas e encontraram a senha para este arquivo. Mas os experimentos não foram apenas etapas de um percurso. Eles existiam para responder a uma única pergunta:</p>
+          
+          <p class="conclusion-quote" style="font-weight: 700; color: #007acc; font-size: 1.15rem; margin: 25px 0; padding-left: 20px; border-left: 4px solid #007acc;">
+            "O que existe em comum entre aquilo que vemos, aquilo que ouvimos e aquilo que não podemos ver?"
+          </p>
+          
+          <p>Talvez esperassem encontrar aqui uma fórmula secreta ou uma resposta capaz de explicar os mistérios do Universo.</p>
+          <p>Mas o verdadeiro segredo nunca esteve escondido neste arquivo.</p>
+          <p>Ele sempre esteve diante de vocês.</p>
+          <p>A luz das estrelas, a voz humana, a música, as comunicações e inúmeras tecnologias existem porque fenômenos aparentemente diferentes compartilham a mesma linguagem: <strong>as ondas</strong>.</p>
+          <p>Foi por isso que protegi esta mensagem. Não para esconder conhecimento, mas para que ela fosse encontrada apenas por quem estivesse disposto a investigar, experimentar e compreender.</p>
+          <p>Hoje, vocês encontraram este arquivo. Espero, porém, que tenham encontrado algo ainda mais importante: uma nova forma de olhar para o mundo.</p>
+          <p>Continuem questionando. Continuem investigando. Afinal, toda grande descoberta começa exatamente assim.</p>
+          <p>Espero que esta seja apenas a primeira de muitas portas que vocês ainda irão abrir.</p>
+        </div>
+
+        <div class="conclusion-signature" style="margin-top: 35px; border-top: 1px solid rgba(0,122,204,0.2); padding-top: 20px; font-size: 0.9rem; color: var(--muted);">
+          <strong style="color: #004d80;">— Pesquisador Anônimo</strong><br>
+          Responsável pelo Projeto Ressonância<br>
+          Instituto Federal do Sertão Pernambucano - Campus Petrolina
+        </div>
+
+        <div class="action-buttons" style="margin-top: 30px;">
+          <button type="button" class="secondary-button" data-next="screen-lab">← Voltar</button>
+          <button type="button" class="primary-button" id="btn-claim-reward">Receber Recompensa <span>→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-reward-transition" class="screen center-screen" aria-live="polite">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; margin-top: -30px;">
+        <div class="auth-scanner">
+          <div class="scanner-beam"></div>
+          <svg viewBox="0 0 100 100" class="shield-icon">
+            <path class="shield-outline" d="M50 10 L85 25 L85 55 C85 75 70 90 50 95 C30 90 15 75 15 55 L15 25 Z"></path>
+            <path d="M50 10 L50 95" opacity="0.3"></path>
+            <path d="M15 35 L85 35" opacity="0.3"></path>
+            <path class="shield-check" d="M35 55 L45 65 L65 40" stroke="#00bfff" stroke-width="6"></path>
+          </svg>
+        </div>
+        <div style="text-align: center;">
+          <p class="eyebrow" style="margin-bottom: 12px; color: var(--muted);">SISTEMA DE AUTENTICAÇÃO</p>
+          <h2 id="authStatusText" style="font-family: 'DM Mono', monospace; font-size: clamp(1.2rem, 4vw, 1.8rem); letter-spacing: 0.1em; color: var(--cyan); text-shadow: 0 0 10px rgba(0, 122, 204, 0.4); min-height: 1.5em; text-transform: uppercase;">Validando equipe...</h2>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-reward" class="screen center-screen">
+      <div class="reward-seal" style="width: 120px; height: 120px; font-size: 4rem; animation: pulseGlow 1.5s infinite alternate; background: #ffffff; border: 3px solid var(--cyan); margin-bottom: 25px;">✓</div>
+      
+      <h1 style="color: var(--cyan); margin-bottom: 20px; font-size: clamp(2.2rem, 7vw, 4.5rem); text-shadow: 0 0 20px rgba(0, 122, 204, 0.4); text-transform: uppercase;">MISSÃO CONCLUÍDA</h1>
+      
+      <div class="team-highlight">
+        <span class="eyebrow" style="color: var(--muted); margin-bottom: 10px; display: block; font-size: 0.75rem;">PARABÉNS!</span>
+        <h2 id="rewardTeamName" class="team-name-glow"></h2>
+      </div>
+      
+      <p class="lead" style="font-weight: 700; font-size: 1.25rem; color: #004d80; margin-top: 0px; margin-bottom: 25px;">Excelente Trabalho!</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(0, 122, 204, 0.3); padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 600px;">
+        <p class="subtle" style="font-size: 1.15rem; margin: 0; color: #2a405c; line-height: 1.6; font-weight: 500;">
+          Apresentem esta tela ao professor para validar a missão e receber a recompensa.
+        </p>
+      </div>
+      
+      <div class="action-buttons" style="margin-top: 45px; justify-content: center; gap: 20px;">
+        <button type="button" class="secondary-button" data-next="screen-conclusion">← Voltar</button>
+        <button type="button" class="primary-button" data-action="restart">Voltar para o início <span style="font-size: 1.35rem; margin-left: 10px;">↺</span></button>
+      </div>
+    </section>
+    
+    <img src="https://drive.google.com/thumbnail?id=1rDinr6cR3sVXKlmNkksg9_ZRA7Q-aGyV&sz=w500" alt="Logo Curso de Física" class="floating-logo">
+    
+    <button id="btn-authors" class="btn-floating-authors">Sobre os autores</button>
+
+    <div id="modal-authors" class="modal-overlay">
+      <div class="modal-content panel">
+        <button id="close-authors" class="close-btn" aria-label="Fechar janela">&times;</button>
+        <p class="panel-title" style="margin-bottom: 20px;"> AUTORES</p>
+        
+        <div class="authors-layout">
+          <div class="authors-photo">
+             <img src="https://drive.google.com/thumbnail?id=1jm4dF5IKqH6LqH1RgTR4H2fzXGXCsmud&sz=w800" alt="Foto da equipe do projeto">
+          </div>
+          <div class="authors-text">
+            <p style="margin-top: 0;">Este projeto foi idealizado e desenvolvido como uma experiência educacional gamificada, que busca aproximar os estudantes da Física por meio da investigação, da experimentação e da imersão..</p>
+            <p><strong>Equipe de Desenvolvimento:</strong><br>
+            Waldir Evangelista da Silva Filho<br>
+            Valdemir De Lima Bezerra<br>
+            Kauan Coelho Da Silva<br>
+            Newton Pionório Nogueira<br>
+            Ericleiton Rodrigues De Macedo</p>
+            
+            <p style="margin-top: 20px; font-size: 0.85rem; color: var(--muted); font-family: 'DM Mono', monospace;">
+              Projeto PIBID - Subprojeto Física<br>
+              IFSertãoPE - Campus Petrolina
+              
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="white-flash" class="flash-overlay"></div>
+  </main>
+  
+  <script>
+    const senhaCorreta = "WVKNE"; 
+    
+    const bootLines = [
+      "Inicializando interface do Projeto Ressonância...", 
+      "Buscando sinal das 5 estações de pesquisa...", 
+      "Falha de comunicação: Senha de acesso ausente.", 
+      "Preparando ambiente de inserção de dados...", 
+      "Acesso concedido à equipe de cientistas."
+    ];
+    const $ = (selector) => document.querySelector(selector);
+    
+    const GEMINI_API_KEY = ""; 
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
+    
+    let storyGenerated = false;
+
+    async function callGemini(prompt, systemInstruction = "") {
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+        
+        if (systemInstruction) {
+             payload.systemInstruction = {
+                parts: [{ text: systemInstruction }]
+            };
+        }
+
+        try {
+            const response = await fetch(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+            
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                return candidate.content.parts[0].text;
+            } else {
+                throw new Error("Unexpected API response structure");
+            }
+        } catch (error) {
+            console.error("Gemini API Call Failed:", error);
+            return null; 
+        }
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
+      const next = document.getElementById(id); next.classList.add("active");
+      if (id === "screen-boot") startBoot();
+      if (id === "screen-release") startRelease();
+      if (id === "screen-lab") { 
+        const statusEl = $("#headerStatus");
+        if (statusEl) statusEl.textContent = "SISTEMA ONLINE"; 
+      }
+    }
+
+  function runLines(container, lines, interval = 1500) {
+    container.innerHTML = "";
+    lines.forEach((line, index) => setTimeout(() => {
+      const item = document.createElement("div"); item.className = "terminal-line"; item.textContent = line; container.appendChild(item);
+    }, index * interval));
+  }
+
+  function startBoot() {
+    const messages = $("#bootMessages"), bar = $("#bootProgress"), percentage = $("#bootPercentage");
+    runLines(messages, bootLines, 1500); bar.style.width = "0%"; percentage.textContent = "0%";
+    bootLines.forEach((_, index) => setTimeout(() => { const value = (index + 1) * 20; bar.style.width = `${value}%`; percentage.textContent = `${value}%`; }, index * 1500 + 100));
+    setTimeout(() => showScreen("screen-diagnostic"), 8500);
+  }
+
+  function startValidation() {
+      const bar = $("#validationProgress"), list = $("#validationList"), title = $("#validationTitle");
+      bar.style.width = "0%"; list.innerHTML = ""; title.textContent = "Validando senha...";
+      
+      setTimeout(() => bar.style.width = "100%", 100);
+      setTimeout(() => { title.textContent = "Acesso autorizado"; list.innerHTML = "<div><b>✓</b> SENHA RECONHECIDA COM SUCESSO</div>"; }, 1000);
+      
+      setTimeout(() => showScreen("screen-release"), 3500);
+  }
+
+  function startRelease() {
+      const release = $("#spectrumRelease"), title = $("#releaseTitle"), status = $("#releaseStatus");
+      release.classList.remove("play");
+      title.textContent = "Recompondo o espectro";
+      status.textContent = "LUZ BRANCA — TODAS AS FREQUÊNCIAS EM EQUILÍBRIO";
+      setTimeout(() => release.classList.add("play"), 120);
+      
+      setTimeout(() => { title.textContent = "Espectro visível propagado"; status.textContent = "ARQUIVO TOTALMENTE RESTAURADO"; }, 5500);
+      
+      setTimeout(() => showScreen("screen-lab"), 12000);
+    }
+
+    document.querySelectorAll("[data-next]").forEach((button) => button.addEventListener("click", () => showScreen(button.dataset.next)));
+    
+    const btnReadSecret = document.getElementById('btn-read-secret');
+    if (btnReadSecret) {
+      btnReadSecret.addEventListener('click', () => {
+        showScreen('screen-transition');
+        const cipherText = document.getElementById('cipherText');
+        const finalPhrase = "ACESSO CONCEDIDO";
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+        let iterations = 0;
+        
+        const interval = setInterval(() => {
+          cipherText.innerText = finalPhrase.split("").map((letter, index) => {
+            if (index < iterations) return finalPhrase[index];
+            return letters[Math.floor(Math.random() * letters.length)];
+          }).join("");
+          
+          if (iterations >= finalPhrase.length) clearInterval(interval);
+          iterations += 1/3; 
+        }, 35);
+
+        setTimeout(() => {
+          const flash = document.getElementById('white-flash');
+          flash.style.opacity = '1';
+          setTimeout(() => {
+            showScreen('screen-conclusion');
+            flash.style.opacity = '0';
+          }, 500);
+        }, 3200);
+      });
+    }
+
+    const btnClaimReward = document.getElementById('btn-claim-reward');
+    if (btnClaimReward) {
+      btnClaimReward.addEventListener('click', () => {
+        showScreen('screen-reward-transition');
+        const authStatus = document.getElementById('authStatusText');
+        authStatus.innerText = "VALIDANDO EQUIPE...";
+        
+        setTimeout(() => { authStatus.innerText = "CRIPTOGRAFANDO REGISTRO..."; }, 1200);
+        setTimeout(() => { authStatus.innerText = "AUTORIZAÇÃO CONFIRMADA"; }, 2500);
+        
+        setTimeout(() => {
+          const flash = document.getElementById('white-flash');
+          flash.style.opacity = '1';
+          setTimeout(() => {
+            showScreen('screen-reward');
+            flash.style.opacity = '0';
+          }, 500);
+        }, 3800);
+      });
+    }
+    
+    let nomeDaEquipe = "";
+    $("#teamForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const enteredName = $("#teamInput").value.trim();
+      
+      if (!enteredName) {
+        $("#teamError").textContent = "ERRO — Identifique sua equipe antes de prosseguir.";
+        return;
+      }
+      
+      nomeDaEquipe = enteredName; 
+      
+      function applyWaveEffect(element, text) {
+        element.innerHTML = "";
+        element.classList.add("dynamic-wave");
+        text.split("").forEach((char, index) => {
+          const span = document.createElement("span");
+          span.textContent = char;
+          if (char === " ") span.style.width = "0.4em"; 
+          span.style.animationDelay = `${index * 0.1}s`; 
+          element.appendChild(span);
+        });
+      }
+      
+      applyWaveEffect($("#teamNameDisplay"), nomeDaEquipe); 
+      
+      const rewardTeamNameEl = $("#rewardTeamName");
+      if (rewardTeamNameEl) applyWaveEffect(rewardTeamNameEl, nomeDaEquipe); 
+      
+      $("#teamError").textContent = "";
+      showScreen("screen-boot"); 
+    });
+    
+    document.querySelector('[data-action="restart"]').addEventListener("click", () => { 
+      $("#modulesForm").reset(); 
+      $("#teamForm").reset(); 
+      const statusEl = $("#headerStatus");
+      if (statusEl) statusEl.textContent = "SISTEMA OFFLINE"; 
+      showScreen("screen-start"); 
+    });
+    
+    $("#modulesForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const entered = $("#senhaInput").value.trim().toUpperCase();
+      const valid = entered === senhaCorreta.toUpperCase();
+      
+      if (!valid) { 
+        $("#formError").textContent = "ERRO — Senha incorreta. Retorne às estações e verifique as pistas."; 
+        return; 
+      }
+      
+      $("#formError").textContent = ""; 
+      showScreen("screen-validation"); 
+      startValidation();
+    });
+
+    const btnAuthors = document.getElementById("btn-authors");
+    const modalAuthors = document.getElementById("modal-authors");
+    const closeAuthors = document.getElementById("close-authors");
+
+    if (btnAuthors && modalAuthors && closeAuthors) {
+      btnAuthors.addEventListener("click", () => {
+        modalAuthors.classList.add("active");
+      });
+      closeAuthors.addEventListener("click", () => {
+        modalAuthors.classList.remove("active");
+      });
+      modalAuthors.addEventListener("click", (e) => {
+        if (e.target === modalAuthors) {
+          modalAuthors.classList.remove("active");
+        }
+      });
+    }
+
+  </script>
+</body>
+</html>
